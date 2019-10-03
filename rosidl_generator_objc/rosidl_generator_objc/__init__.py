@@ -82,6 +82,7 @@ def generate_objc(generator_arguments_file, typesupport_impl, typesupport_impls)
                     'constant_value_to_objc': constant_value_to_objc,
                     'convert_camel_case_to_lower_case_underscore':
                     convert_camel_case_to_lower_case_underscore,
+                    'get_extract_objc_func': get_extract_objc_func,
                     'get_builtin_objc_type': get_builtin_objc_type,
                     'module_name': module_name, 'package_name': package_name,
                     'jni_package_name': jni_package_name,
@@ -131,6 +132,48 @@ def constant_value_to_objc(type_, value):
         return '"%s"' % escape_string(value)
 
     assert False, "unknown constant type '%s'" % type_
+
+def get_extract_objc_func(type_):
+    if type_ == 'bool':
+        return 'boolValue'
+
+    if type_ == 'byte':
+        return 'unsignedCharValue'
+
+    if type_ == 'char':
+        return 'charValue'
+
+    if type_ == 'float32':
+        return 'floatValue'
+
+    if type_ == 'float64':
+        return 'doubleValue'
+
+    if type_ in 'int8':
+        return 'charValue'
+
+    if type_ in 'uint8':
+        return 'charValue'
+
+    if type_ in 'int16':
+        return 'shortValue'
+
+    if type_ in 'uint16':
+        return 'unsignedShortValue'
+
+    if type_ in 'int32':
+        return 'integerValue'
+
+    if type_ in 'uint32':
+        return 'unsignedIntegerValue'
+
+    if type_ in 'int64':
+        return 'longValue'
+
+    if type_ in 'uint64':
+        return 'unsignedLongValue'
+
+    assert False, "unknown type '%s'" % type_
 
 
 def get_builtin_objc_type(type_, use_primitives=True):
