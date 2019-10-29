@@ -47,10 +47,20 @@
       (convert_from_objc_signature)converter_ptr;
 
   void *raw_ros_message = convert_from_objc(message);
+
   rcl_ret_t ret = rcl_publish(publisher, raw_ros_message);
+
   if (ret != RCL_RET_OK) {
     // TODO(esteve): handle error
   }
+
+  intptr_t destroy_msg_ptr = [[message class] destroyMsgPtr];
+
+  typedef void (*destroy_msg_signature)(void *);
+  destroy_msg_signature destroy_msg =
+      (destroy_msg_signature)destroy_msg_ptr;
+
+  destroy_msg(raw_ros_message);
 }
 
 - (instancetype)initWithArguments:(intptr_t)

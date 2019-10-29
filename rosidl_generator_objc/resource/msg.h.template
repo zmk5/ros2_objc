@@ -70,6 +70,7 @@ type_name = 'ROS_{}_msg_{}'.format(field_type_pkg, field_msg_name)
 + (intptr_t)typesupportHandle;
 + (intptr_t)fromObjcConverterPtr;
 + (intptr_t)toObjcConverterPtr;
++ (intptr_t)destroyMsgPtr;
 + (@(message_c_name)*)fromObjc:(@(message_objc_name)*) message_objc_;
 + (@(message_objc_name)*)toObjc:(@(message_c_name)*) message_c_;
 @@end

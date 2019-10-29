@@ -191,13 +191,26 @@
           (convert_to_objc_signature)to_converter_ptr;
 
       message = convert_to_objc(taken_msg);
+
+
     }
 
     if (message != NULL) {
       assert([rosSubscription callback] != NULL);
       // assert([rosSubscription callback] != nil);
       [rosSubscription callback](message);
+
+      intptr_t destroy_msg_ptr = [[message class] destroyMsgPtr];
+
+      typedef void (*destroy_msg_signature)(void *);
+      destroy_msg_signature destroy_msg =
+          (destroy_msg_signature)destroy_msg_ptr;
+
+      destroy_msg(taken_msg);
+
     }
+
+
   }
 
   for (ROSClient *rosClient in [node clients]) {

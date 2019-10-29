@@ -142,6 +142,12 @@ type_name = 'ROS_{}_msg_{}'.format(field_type_pkg, field_msg_name)
   return message;
 }
 
++ (intptr_t)destroyMsgPtr {
+  intptr_t ptr =
+      (intptr_t)@(message_c_name)__destroy;
+  return ptr;
+}
+
 + (intptr_t)fromObjcConverterPtr {
   intptr_t ptr =
       (intptr_t)@(message_objc_name)_convert_from_objc;
