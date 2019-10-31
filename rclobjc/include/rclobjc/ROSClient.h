@@ -47,6 +47,8 @@ typedef void (*FunctionPointer)(id);
 
 - (void)handleResponse:(int64_t)sequenceNumber:(id)response;
 
+- (void)dispose;
+
 @property(readonly) intptr_t nodeHandle;
 @property(readonly) intptr_t clientHandle;
 @property(readonly) Class serviceType;

@@ -31,4 +31,6 @@
 @property(readonly) intptr_t publisherHandle;
 @property(readonly) NSString *topic;
 
+- (void)dispose;
+
 @end

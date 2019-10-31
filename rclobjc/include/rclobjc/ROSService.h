@@ -23,6 +23,8 @@
   void (*callback)(NSObject *, NSObject *, NSObject *);
 }
 
+- (void)dispose;
+
 - (instancetype)initWithArguments:(intptr_t)
                        nodeHandle:(intptr_t)
                     serviceHandle:(Class)
