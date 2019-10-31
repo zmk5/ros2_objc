@@ -38,6 +38,38 @@
 @synthesize callback;
 @synthesize messageType;
 
+- (void)dispose{
+  intptr_t node_handle = self.nodeHandle;
+  intptr_t subscription_handle = self.subscriptionHandle;
+
+  if (subscription_handle == 0) {
+    // everything is ok, already destroyed
+    return;
+  }
+
+  if (node_handle == 0) {
+    // TODO(esteve): handle this, node is null, but subscription isn't
+    return;
+  }
+
+  rcl_node_t * node = (rcl_node_t *)node_handle;
+
+  assert(node != NULL);
+
+  rcl_subscription_t * subscription = (rcl_subscription_t *)subscription_handle;
+
+  assert(subscription != NULL);
+
+  rcl_ret_t ret = rcl_subscription_fini(subscription, node);
+
+  if (ret != RCL_RET_OK) {
+    NSLog(@"Failed to destroy subscription: %s", rcl_get_error_string_safe());
+    rcl_reset_error();
+  }
+
+  self.nodeHandle = 0;
+}
+
 - (instancetype)initWithArguments:(intptr_t)
                        nodeHandle:(intptr_t)
                subscriptionHandle:(NSString *)

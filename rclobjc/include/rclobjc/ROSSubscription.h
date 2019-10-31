@@ -23,7 +23,9 @@
   Class messageType;
 }
 
-- (instancetype)initWithArguments:(intptr_t)
+- (void)dispose;
+
+- (instancetype)initWithArguments:(intptr_t) foo
                        nodeHandle:(intptr_t)
                subscriptionHandle:(NSString *)
                             topic:(Class)

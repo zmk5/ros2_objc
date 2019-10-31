@@ -38,6 +38,39 @@
 @synthesize serviceName;
 @synthesize callback;
 
+
+- (void)dispose{
+  intptr_t node_handle = self.nodeHandle;
+  intptr_t service_handle = self.serviceHandle;
+
+  if (service_handle == 0) {
+    // everything is ok, already destroyed
+    return;
+  }
+
+  if (node_handle == 0) {
+    // TODO(esteve): handle this, node is null, but service isn't
+    return;
+  }
+
+  rcl_node_t * node = (rcl_node_t *)node_handle;
+
+  assert(node != NULL);
+
+  rcl_service_t * service = (rcl_service_t *)service_handle;
+
+  assert(service != NULL);
+
+  rcl_ret_t ret = rcl_service_fini(service, node);
+
+  if (ret != RCL_RET_OK) {
+    NSLog(@"Failed to destroy service: %s", rcl_get_error_string_safe());
+    rcl_reset_error();
+  }
+
+  self.nodeHandle = 0;
+}
+
 - (instancetype)initWithArguments:(intptr_t)
                        nodeHandle:(intptr_t)
                     serviceHandle:(Class)

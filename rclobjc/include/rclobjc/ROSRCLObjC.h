@@ -22,5 +22,8 @@
 + (ROSNode *)createNode:(NSString *)nodeName;
 + (ROSNode *)createNode:(NSString *)nodeName:(NSString *)nodeNamespace;
 + (void)spinOnce:(ROSNode *)node;
++ (void)nativeShutdown;
++ (void)cleanup;
+
 
 @end

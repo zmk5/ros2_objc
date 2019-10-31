@@ -14,7 +14,10 @@
  */
 
 #import <objc/runtime.h>
+#include <stdio.h>
 
+#include <rcl/error_handling.h>
+#include <rcl/node.h>
 #include <rcl/rcl.h>
 
 #import "rclobjc/ROSNode.h"
@@ -46,6 +49,19 @@
 @synthesize subscriptions;
 @synthesize services;
 @synthesize clients;
+
+/*
+- (void)functionLorena {
+  printf("Hola soy lorena");
+}
+*/
+
+
+/*
++ (void)testDispose:(intptr_t)nodeHandle{
+
+}
+*/
 
 + (intptr_t)createPublisherHandle:(intptr_t)
                        nodeHandle:(Class)
@@ -168,12 +184,13 @@
   intptr_t publisherHandle =
       [ROSNode createPublisherHandle:self.nodeHandle:messageType:topic];
   ROSPublisher *publisher = [[ROSPublisher alloc] initWithArguments :self.nodeHandle :publisherHandle :topic];
+  [[self publishers] addObject:publisher];
   return publisher;
 }
 
 - (ROSSubscription *)createSubscriptionWithCallback:(Class)
                                         messageType:(NSString *)
-                                              topic:(void (*)(id))callback {
+                                              topic:(void (*)(NSObject*))callback {
   intptr_t subscriptionHandle =
       [ROSNode createSubscriptionHandle:self.nodeHandle:messageType:topic];
   ROSSubscription *subscription = [[ROSSubscription alloc] initWithArguments :self.nodeHandle :subscriptionHandle :topic :messageType :callback];
@@ -183,7 +200,7 @@
 
 - (ROSService *)createServiceWithCallback:(Class)
                               serviceType:(NSString *)
-                              serviceName:(void (*)(id, id, id))callback {
+                              serviceName:(void (*)(NSObject*, NSObject*, NSObject*))callback {
   intptr_t serviceHandle =
       [ROSNode createServiceHandle:self.nodeHandle:serviceType:serviceName];
   ROSService *service = [[ROSService alloc] initWithArguments :self.nodeHandle :serviceHandle :serviceType :serviceName :callback];
@@ -199,15 +216,38 @@
   return client;
 }
 
+- (void)dispose{
+
+  intptr_t node_handle = self.nodeHandle;
+  if (node_handle == 0) {
+    // already destroyed
+    return;
+  }
+
+  rcl_node_t * node = (rcl_node_t *)node_handle;
+
+  rcl_ret_t ret = rcl_node_fini(node);
+
+  if (ret != RCL_RET_OK) {
+    NSLog(@"Failed to destroy node: %s", rcl_get_error_string_safe());
+    rcl_reset_error();
+  }
+
+  self.nodeHandle = 0;
+}
+
 - (id)initWithArguments:(NSString *)
                nodeName:(NSString *)
           nodeNamespace:(intptr_t)nodeHandle {
   self.nodeName = nodeName;
   self.nodeNamespace = nodeNamespace;
   self.nodeHandle = nodeHandle;
+  self.publishers = [[NSMutableSet alloc] init];
   self.subscriptions = [[NSMutableSet alloc] init];
   self.services = [[NSMutableSet alloc] init];
   self.clients = [[NSMutableSet alloc] init];
   return self;
 }
+
+
 @end

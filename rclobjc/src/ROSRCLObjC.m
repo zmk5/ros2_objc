@@ -31,6 +31,9 @@
 
 @implementation ROSRCLObjC
 
+static NSMutableArray *nodes;
+
+
 + (bool)ok {
   return rcl_ok();
 }
@@ -40,6 +43,8 @@
   if (ret != RCL_RET_OK) {
     // TODO(esteve): check return status
   }
+
+  nodes = [[NSMutableArray alloc] init];
 }
 
 + (ROSNode *)createNode:(NSString *)nodeName {
@@ -50,6 +55,8 @@
   intptr_t nodeHandle = [ROSRCLObjC createNodeHandle:nodeName:nodeNamespace];
   ROSNode *node =
       [[ROSNode alloc] initWithArguments:nodeName:nodeNamespace:nodeHandle];
+  [nodes addObject:node];
+
   return node;
 }
 
@@ -65,7 +72,7 @@
       rcl_node_init(node, node_name, node_namespace, &default_options);
   if (ret != RCL_RET_OK) {
     // TODO(esteve): check return status
-    NSLog(@"Failed to create node: %s", rcl_get_error_string_safe());
+    //NSLog(@"Failed to create node: %s", rcl_get_error_string_safe());
     rcl_reset_error();
     return 0;
   }
@@ -75,12 +82,17 @@
 
 + (void)spinOnce:(ROSNode *)node {
   rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
+  //printf("entro");
 
   int number_of_subscriptions = [[node subscriptions] count];
   int number_of_guard_conditions = 0;
   int number_of_timers = 0;
+
   int number_of_clients = [[node clients] count];
   int number_of_services = [[node services] count];
+
+  //NSLog(@"number_of_services: %d", number_of_services);
+  //printf(number_of_services);
 
   rcl_ret_t ret = rcl_wait_set_init(
       &wait_set, number_of_subscriptions, number_of_guard_conditions,
@@ -191,13 +203,23 @@
           (convert_to_objc_signature)to_converter_ptr;
 
       message = convert_to_objc(taken_msg);
+
     }
 
     if (message != NULL) {
       assert([rosSubscription callback] != NULL);
       // assert([rosSubscription callback] != nil);
       [rosSubscription callback](message);
-    }
+
+      intptr_t destroy_msg_ptr = [[message class] destroyMsgPtr];
+
+       typedef void (*destroy_msg_signature)(void *);
+       destroy_msg_signature destroy_msg =
+           (destroy_msg_signature)destroy_msg_ptr;
+
+       destroy_msg(taken_msg);
+     }
+
   }
 
   for (ROSClient *rosClient in [node clients]) {
@@ -302,21 +324,67 @@
       assert(false);
     }
 
+
     if (ret != RCL_RET_SERVICE_TAKE_FAILED) {
       NSObject *otaken_msg = convert_request_to_objc(service_request);
 
       assert(otaken_msg != NULL);
       assert(otaken_msg != nil);
+      assert(responseMessage != NULL);
+      assert(responseMessage != nil);
+      assert(&header != NULL);
+      assert(&header != nil);
+      //printf("otaken_msg != nil");
 
-      [rosService callback](&header, otaken_msg, responseMessage);
+      [rosService callback](NULL, otaken_msg, responseMessage);
+      //printf("rosService callback");
 
       void *service_response = convert_response_from_objc(responseMessage);
+      //printf("service_response");
 
       ret = rcl_send_response(service, &header, service_response);
+      //printf("rcl_send_response");
 
       assert(ret == RCL_RET_OK);
+      //printf("ret==RCL_RET_OK END");
+
     }
   }
 }
+
++ (void)nativeShutdown {
+
+  rcl_ret_t ret = rcl_shutdown();
+  if (ret != RCL_RET_OK) {
+    NSLog(@"Failed to shutdown: %s", rcl_get_error_string_safe());
+    rcl_reset_error();
+  }
+}
+
++ (void)cleanup {
+
+  for (ROSNode *node in nodes) {
+
+    for (ROSPublisher *rosPublisher in [node publishers]) {
+      [rosPublisher dispose];
+    }
+
+    for (ROSSubscription *rosSubscription in [node subscriptions]) {
+      [rosSubscription dispose];
+    }
+
+    for (ROSService *rosService in [node services]) {
+      [rosService dispose];
+    }
+
+    for (ROSClient *rosClient in [node clients]) {
+      [rosClient dispose];
+    }
+
+    [node dispose];
+  }
+
+}
+
 
 @end

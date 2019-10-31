@@ -24,20 +24,24 @@
   NSString *nodeName;
   NSString *nodeNamespace;
   intptr_t nodeHandle;
+  NSMutableSet<ROSSubscription *> *publishers;
   NSMutableSet<ROSSubscription *> *subscriptions;
   NSMutableSet<ROSService *> *services;
   NSMutableSet<ROSClient *> *clients;
+
 }
+
+//- (void)functionLorena;
 
 - (ROSPublisher *)createPublisher:(Class)messageType:(NSString *)topic;
 
 - (ROSSubscription *)createSubscriptionWithCallback:(Class)
                                         messageType:(NSString *)
-                                              topic:(void (*)(id))callback;
+                                              topic:(void (*)(NSObject*))callback;
 
 - (ROSService *)createServiceWithCallback:(Class)
                               serviceType:(NSString *)
-                              serviceName:(void (*)(id, id, id))callback;
+                              serviceName:(void (*)(NSObject*, NSObject*, NSObject*))callback;
 
 - (ROSClient *)createClient:(Class)serviceType:(NSString *)serviceName;
 
@@ -45,9 +49,13 @@
                          nodeName:(NSString *)
                     nodeNamespace:(intptr_t)nodeHandle;
 
+- (void)dispose;
+
+
 @property(readonly) NSString *nodeName;
 @property(readonly) NSString *nodeNamespace;
 @property(readonly) intptr_t nodeHandle;
+@property(retain, nonatomic) NSMutableSet<ROSPublisher *> *publishers;
 @property(retain, nonatomic) NSMutableSet<ROSSubscription *> *subscriptions;
 @property(retain, nonatomic) NSMutableSet<ROSService *> *services;
 @property(retain, nonatomic) NSMutableSet<ROSClient *> *clients;

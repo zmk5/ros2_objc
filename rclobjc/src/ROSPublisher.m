@@ -47,10 +47,52 @@
       (convert_from_objc_signature)converter_ptr;
 
   void *raw_ros_message = convert_from_objc(message);
+
   rcl_ret_t ret = rcl_publish(publisher, raw_ros_message);
+
   if (ret != RCL_RET_OK) {
     // TODO(esteve): handle error
   }
+
+  intptr_t destroy_msg_ptr = [[message class] destroyMsgPtr];
+
+   typedef void (*destroy_msg_signature)(void *);
+   destroy_msg_signature destroy_msg =
+       (destroy_msg_signature)destroy_msg_ptr;
+
+   destroy_msg(raw_ros_message);
+
+}
+
+- (void)dispose{
+
+  intptr_t node_handle = self.nodeHandle;
+  intptr_t publisher_handle = self.publisherHandle;
+
+  if (publisher_handle == 0) {
+    // everything is ok, already destroyed
+    return;
+  }
+
+  if (node_handle == 0) {
+    // TODO(esteve): handle this, node is null, but publisher isn't
+    return;
+  }
+
+  rcl_node_t * node = (rcl_node_t *)node_handle;
+
+  rcl_publisher_t * publisher = (rcl_publisher_t *)publisher_handle;
+
+  assert(publisher != NULL);
+
+  rcl_ret_t ret = rcl_publisher_fini(publisher, node);
+
+  if (ret != RCL_RET_OK) {
+    NSLog(@"Failed to destroy publisher: %s", rcl_get_error_string_safe());
+    rcl_reset_error();
+  }
+
+  self.nodeHandle = 0;
 }
 
 - (instancetype)initWithArguments:(intptr_t)
@@ -61,4 +103,6 @@
   self.topic = topic;
   return self;
 }
+
+
 @end
