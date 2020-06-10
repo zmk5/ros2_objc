@@ -16,8 +16,13 @@
 #include <rcl/error_handling.h>
 #include <rcl/node.h>
 #include <rcl/rcl.h>
+#include <rcl/wait.h>
+#include <rcl/context.h>
+#include <rcl/allocator.h>
+#include <rcl/init_options.h>
+#include <rcl/error_handling.h>
 #include <rmw/rmw.h>
-#include <rosidl_generator_c/message_type_support_struct.h>
+#include <rosidl_runtime_c/message_type_support_struct.h>
 #include <stdlib.h>
 
 #import "rclobjc/ROSNode.h"
@@ -32,6 +37,7 @@
 @implementation ROSRCLObjC
 
 static NSMutableArray *nodes;
+static rcl_context_t context;
 
 
 + (bool)ok {
@@ -39,7 +45,9 @@ static NSMutableArray *nodes;
 }
 
 + (void)rclInit {
-  rcl_ret_t ret = rcl_init(0, NULL, rcl_get_default_allocator());
+  context = rcl_get_zero_initialized_context();
+  const rcl_init_options_t options = rcl_get_zero_initialized_init_options();
+  rcl_ret_t ret = rcl_init(0, NULL, &options, &context);
   if (ret != RCL_RET_OK) {
     // TODO(esteve): check return status
   }
@@ -69,7 +77,7 @@ static NSMutableArray *nodes;
 
   rcl_node_options_t default_options = rcl_node_get_default_options();
   rcl_ret_t ret =
-      rcl_node_init(node, node_name, node_namespace, &default_options);
+      rcl_node_init(node, node_name, node_namespace, &default_options, &context);
   if (ret != RCL_RET_OK) {
     // TODO(esteve): check return status
     //NSLog(@"Failed to create node: %s", rcl_get_error_string_safe());
@@ -87,6 +95,7 @@ static NSMutableArray *nodes;
   int number_of_subscriptions = [[node subscriptions] count];
   int number_of_guard_conditions = 0;
   int number_of_timers = 0;
+  int number_of_events = 0;
 
   int number_of_clients = [[node clients] count];
   int number_of_services = [[node services] count];
@@ -95,8 +104,14 @@ static NSMutableArray *nodes;
   //printf(number_of_services);
 
   rcl_ret_t ret = rcl_wait_set_init(
-      &wait_set, number_of_subscriptions, number_of_guard_conditions,
-      number_of_timers, number_of_clients, number_of_services,
+      &wait_set,
+      number_of_subscriptions,
+      number_of_guard_conditions,
+      number_of_timers,
+      number_of_clients,
+      number_of_services,
+      number_of_events,
+      &context,
       rcl_get_default_allocator());
   if (ret != RCL_RET_OK) {
     // TODO(esteve): handle error
@@ -128,7 +143,7 @@ static NSMutableArray *nodes;
   for (ROSSubscription *rosSubscription in [node subscriptions]) {
     rcl_subscription_t *subscription =
         (rcl_subscription_t *)[rosSubscription subscriptionHandle];
-    ret = rcl_wait_set_add_subscription(&wait_set, subscription);
+    ret = rcl_wait_set_add_subscription(&wait_set, subscription, &context);
     if (ret != RCL_RET_OK) {
       // TODO(esteve): handle error
       assert(false);
@@ -138,7 +153,7 @@ static NSMutableArray *nodes;
 
   for (ROSService *rosService in [node services]) {
     rcl_service_t *service = (rcl_service_t *)[rosService serviceHandle];
-    ret = rcl_wait_set_add_service(&wait_set, service);
+    ret = rcl_wait_set_add_service(&wait_set, service, &context);
     if (ret != RCL_RET_OK) {
       // TODO(esteve): handle error
       assert(false);
@@ -148,7 +163,7 @@ static NSMutableArray *nodes;
 
   for (ROSClient *rosClient in [node clients]) {
     rcl_client_t *client = (rcl_client_t *)[rosClient clientHandle];
-    ret = rcl_wait_set_add_client(&wait_set, client);
+    ret = rcl_wait_set_add_client(&wait_set, client, &context);
     if (ret != RCL_RET_OK) {
       // TODO(esteve): handle error
       assert(false);
@@ -184,7 +199,7 @@ static NSMutableArray *nodes;
 
     assert(taken_msg != NULL);
 
-    rcl_ret_t ret = rcl_take(subscription, taken_msg, NULL);
+    rcl_ret_t ret = rcl_take(subscription, taken_msg, NULL, &context);
 
     if (ret != RCL_RET_OK && ret != RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
       // TODO(esteve): handle error
@@ -354,7 +369,7 @@ static NSMutableArray *nodes;
 
 + (void)nativeShutdown {
 
-  rcl_ret_t ret = rcl_shutdown();
+  rcl_ret_t ret = rcl_shutdown(&context);
   if (ret != RCL_RET_OK) {
     NSLog(@"Failed to shutdown: %s", rcl_get_error_string_safe());
     rcl_reset_error();
