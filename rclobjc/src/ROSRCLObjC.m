@@ -41,7 +41,7 @@ static rcl_context_t context;
 
 
 + (bool)ok {
-  return rcl_ok();
+  return rcl_context_is_valid(&context);
 }
 
 + (void)rclInit {
@@ -80,7 +80,7 @@ static rcl_context_t context;
       rcl_node_init(node, node_name, node_namespace, &default_options, &context);
   if (ret != RCL_RET_OK) {
     // TODO(esteve): check return status
-    //NSLog(@"Failed to create node: %s", rcl_get_error_string_safe());
+    //NSLog(@"Failed to create node: %s", rcl_get_error_string());
     rcl_reset_error();
     return 0;
   }
@@ -119,23 +119,9 @@ static rcl_context_t context;
     return;
   }
 
-  ret = rcl_wait_set_clear_subscriptions(&wait_set);
+  ret = rcl_wait_set_clear(&wait_set);
   if (ret != RCL_RET_OK) {
-    // TODO(esteve): handle error
-    assert(false);
-    return;
-  }
-
-  ret = rcl_wait_set_clear_services(&wait_set);
-  if (ret != RCL_RET_OK) {
-    // TODO(esteve): handle error
-    assert(false);
-    return;
-  }
-
-  ret = rcl_wait_set_clear_clients(&wait_set);
-  if (ret != RCL_RET_OK) {
-    // TODO(esteve): handle error
+    // TODO(zmk5): handle error https://github.com/ros2/rcl/blob/2be7dc89ad8d64d47f694fe0a1ce74f6f1f23bcd/rcl/CHANGELOG.rst#060-2018-11-16
     assert(false);
     return;
   }
@@ -371,7 +357,7 @@ static rcl_context_t context;
 
   rcl_ret_t ret = rcl_shutdown(&context);
   if (ret != RCL_RET_OK) {
-    NSLog(@"Failed to shutdown: %s", rcl_get_error_string_safe());
+    NSLog(@"Failed to shutdown: %s", rcl_get_error_string());
     rcl_reset_error();
   }
 }

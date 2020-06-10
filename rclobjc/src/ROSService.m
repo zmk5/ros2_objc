@@ -64,7 +64,7 @@
   rcl_ret_t ret = rcl_service_fini(service, node);
 
   if (ret != RCL_RET_OK) {
-    NSLog(@"Failed to destroy service: %s", rcl_get_error_string_safe());
+    NSLog(@"Failed to destroy service: %s", rcl_get_error_string());
     rcl_reset_error();
   }
 

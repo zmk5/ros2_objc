@@ -229,7 +229,7 @@
   rcl_ret_t ret = rcl_node_fini(node);
 
   if (ret != RCL_RET_OK) {
-    NSLog(@"Failed to destroy node: %s", rcl_get_error_string_safe());
+    NSLog(@"Failed to destroy node: %s", rcl_get_error_string());
     rcl_reset_error();
   }
 
