@@ -48,7 +48,8 @@
 
   void *raw_ros_message = convert_from_objc(message);
 
-  rcl_ret_t ret = rcl_publish(publisher, raw_ros_message);
+  // TODO(zmk5): Figure out how to get rmw_publisher_allocation_t as third param
+  rcl_ret_t ret = rcl_publish(publisher, raw_ros_message, NULL);
 
   if (ret != RCL_RET_OK) {
     // TODO(esteve): handle error
